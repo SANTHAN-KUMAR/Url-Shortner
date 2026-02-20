@@ -20,8 +20,8 @@ permissions:
   pull-requests: write
 
 env:
-  # ⬇️ CHANGE THIS to your instructor's GitHub username and repo name
-  PBL_GUARDIAN_REPO: "https://github.com/SANTHAN-KUMAR/PBL-Guardian.git"
+  # ⬇️ CHANGE THIS to your instructor's GitHub username and repo name (owner/repo)
+  PBL_GUARDIAN_REPO: "SANTHAN-KUMAR/PBL-Guardian"
   PBL_GUARDIAN_BRANCH: "main"
 
 jobs:
@@ -38,11 +38,15 @@ jobs:
 
       # 2. Download latest PBL Guardian scripts from central repo
       - name: "⬇️ Download PBL Guardian (latest)"
+        shell: bash
         run: |
+          set -euo pipefail
           echo "📦 Downloading latest PBL Guardian from ${{ env.PBL_GUARDIAN_REPO }}..."
           mkdir -p .pbl-guardian
-          curl -sL "https://github.com/${{ env.PBL_GUARDIAN_REPO }}/archive/refs/heads/${{ env.PBL_GUARDIAN_BRANCH }}.tar.gz" \
-            | tar xz --strip-components=1 -C .pbl-guardian
+
+          curl -fsSL "https://github.com/${{ env.PBL_GUARDIAN_REPO }}/archive/refs/heads/${{ env.PBL_GUARDIAN_BRANCH }}.tar.gz" \
+            | tar xz -f - --strip-components=1 -C .pbl-guardian
+
           echo "✅ Downloaded scripts:"
           ls -la .pbl-guardian/scripts/
 
@@ -58,6 +62,7 @@ jobs:
 
       # 5. Clone reference repos for L1 plagiarism
       - name: "📚 Prepare reference corpus"
+        shell: bash
         run: |
           mkdir -p references
           if [ -f ".pbl/config.json" ]; then
@@ -72,7 +77,7 @@ jobs:
           " | while IFS= read -r repo; do
               if [ -n "$repo" ]; then
                 echo "Cloning reference: $repo"
-                git clone --depth 1 "https://github.com/${repo}.git" "references/$(basename $repo)" 2>/dev/null || true
+                git clone --depth 1 "https://github.com/${repo}.git" "references/$(basename "$repo")" 2>/dev/null || true
               fi
             done
           fi
@@ -80,15 +85,17 @@ jobs:
       # 6. Get commit metadata
       - name: "📝 Get commit metadata"
         id: meta
+        shell: bash
         run: |
-          echo "timestamp=$(git show -s --format=%aI ${{ github.sha }})" >> $GITHUB_OUTPUT
-          echo "author=${{ github.actor }}" >> $GITHUB_OUTPUT
+          echo "timestamp=$(git show -s --format=%aI ${{ github.sha }})" >> "$GITHUB_OUTPUT"
+          echo "author=${{ github.actor }}" >> "$GITHUB_OUTPUT"
 
       # 7. Run evaluation
       - name: "🔍 Run PBL Guardian evaluation"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPORT_FILE: evaluation_report.md
+        shell: bash
         run: |
           python3 .pbl-guardian/scripts/evaluate.py \
             --config ".pbl/config.json" \
