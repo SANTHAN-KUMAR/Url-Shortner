@@ -21,7 +21,7 @@ permissions:
 
 env:
   # ⬇️ CHANGE THIS to your instructor's GitHub username and repo name
-  PBL_GUARDIAN_REPO: "YOUR-GITHUB-USERNAME/PBL-Guardian"
+  PBL_GUARDIAN_REPO: "https://github.com/SANTHAN-KUMAR/PBL-Guardian.git"
   PBL_GUARDIAN_BRANCH: "main"
 
 jobs:
